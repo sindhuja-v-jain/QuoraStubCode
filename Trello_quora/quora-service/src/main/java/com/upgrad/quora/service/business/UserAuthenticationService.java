@@ -5,6 +5,7 @@ import com.upgrad.quora.service.dao.UserDao;
 import com.upgrad.quora.service.entity.UserAuthEntity;
 import com.upgrad.quora.service.entity.UserEntity;
 import com.upgrad.quora.service.exception.AuthenticationFailedException;
+import com.upgrad.quora.service.exception.SignOutRestrictedException;
 import com.upgrad.quora.service.exception.SignUpRestrictedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -84,6 +85,24 @@ public class UserAuthenticationService {
         userDao.updateUserEntity(userEntity);
 
         return userAuthEntity;
+    }
+
+    /**
+     * The signout method
+     *
+     * @param accessToken : required to signout the user
+     * @throws SignOutRestrictedException : if the access-token is not found in the DB.
+     * @return UserEntity : that user is signed out.
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public UserEntity signout(final String accessToken) throws SignOutRestrictedException {
+        UserAuthEntity userAuthEntity = userAuthDao.getUserAuthByToken(accessToken);
+        if (userAuthEntity == null) {
+            throw new SignOutRestrictedException("SGR-001", "User is not Signed in");
+        }
+        userAuthEntity.setLogoutAt(ZonedDateTime.now());
+        userAuthDao.updateUserAuth(userAuthEntity);
+        return userAuthEntity.getUserEntity();
     }
 
     // checks whether the username exist in the database
