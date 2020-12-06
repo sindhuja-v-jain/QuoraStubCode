@@ -13,7 +13,6 @@ import java.time.ZonedDateTime;
 
 @Service
 public class CommonService {
-
     @Autowired
     private UserDao userDao;
 

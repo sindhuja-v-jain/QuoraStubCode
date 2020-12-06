@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -53,6 +54,32 @@ public class QuestionService {
                 questionEntity.setUuid(UUID.randomUUID().toString());
                 questionEntity.setUserEntity(userAuthEntity.getUserEntity());
                 return questionDao.createQuestion(questionEntity);
+            }
+        }
+    }
+
+    /**
+     * Business logic to authorize user who wants to get a list of all questions and return list of
+     * questions
+     *
+     * @param authorization
+     * @return list of all questions
+     * @throws AuthorizationFailedException
+     */
+    public List<QuestionEntity> getAllQuestions(final String authorization)
+            throws AuthorizationFailedException {
+        UserAuthEntity userAuthEntity = userAuthDao.getUserAuthByToken(authorization);
+        if (userAuthEntity == null) {
+            throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
+        } else {
+            // Retrieve logout_at attribute value of UserAuthEntity to check if user has already signed
+            // out
+            ZonedDateTime logoutAt = userAuthEntity.getLogoutAt();
+            if (logoutAt != null) {
+                throw new AuthorizationFailedException(
+                        "ATHR-002", "User is signed out.Sign in first to get all questions");
+            } else {
+                return questionDao.getAllQuestions();
             }
         }
     }
