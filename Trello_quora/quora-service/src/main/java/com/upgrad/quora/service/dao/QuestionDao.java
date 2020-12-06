@@ -4,6 +4,7 @@ import com.upgrad.quora.service.entity.QuestionEntity;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 
@@ -35,4 +36,33 @@ public class QuestionDao {
                 entityManager.createNamedQuery("getAllQuestions", QuestionEntity.class).getResultList();
         return questionsList;
     }
+
+    /**
+     * Fetch Question by question Uuid
+     *
+     * @param questionUuid
+     * @return question by Uuid
+     */
+    public QuestionEntity getQuestionByUuid(String questionUuid) {
+        try {
+            return entityManager
+                    .createNamedQuery("getQuestionByUuid", QuestionEntity.class)
+                    .setParameter("questionId", questionUuid)
+                    .getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    /**
+     * persist the edited Question in Database
+     *
+     * @param questionEntity
+     * @return
+     */
+    public QuestionEntity editQuestion(QuestionEntity questionEntity) {
+        entityManager.persist(questionEntity);
+        return questionEntity;
+    }
+
 }

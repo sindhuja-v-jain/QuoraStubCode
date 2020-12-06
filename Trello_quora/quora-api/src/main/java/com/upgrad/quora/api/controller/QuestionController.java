@@ -1,19 +1,15 @@
 package com.upgrad.quora.api.controller;
 
-import com.upgrad.quora.api.model.QuestionDetailsResponse;
-import com.upgrad.quora.api.model.QuestionRequest;
-import com.upgrad.quora.api.model.QuestionResponse;
+import com.upgrad.quora.api.model.*;
 import com.upgrad.quora.service.business.QuestionService;
 import com.upgrad.quora.service.entity.QuestionEntity;
 import com.upgrad.quora.service.exception.AuthorizationFailedException;
+import com.upgrad.quora.service.exception.InvalidQuestionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -84,5 +80,38 @@ public class QuestionController {
             questionResponseList.add(new QuestionDetailsResponse().id(uuid).content(content));
         }
         return new ResponseEntity<List<QuestionDetailsResponse>>(questionResponseList, HttpStatus.OK);
+    }
+
+    /**
+     * Controller method to handle PUT request to update question
+     *
+     * @param questionEditRequest
+     * @param questionUuid
+     * @param authorization
+     * @return QuestionEditResponse
+     * @throws AuthorizationFailedException
+     * @throws InvalidQuestionException
+     */
+    @RequestMapping(
+            method = RequestMethod.PUT,
+            path = "/question/edit/{questionId}",
+            consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
+            produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<QuestionEditResponse> editQuestionContent(
+            QuestionEditRequest questionEditRequest,
+            @PathVariable("questionId") final String questionUuid,
+            @RequestHeader("authorization") final String authorization)
+            throws AuthorizationFailedException, InvalidQuestionException {
+        // Set the user typed content as the new content of the Question entity
+        String content = questionEditRequest.getContent();
+
+        // Authorize user and edit the question with Uuid passed
+        QuestionEntity questionEntity =
+                questionService.editQuestionContent(authorization, questionUuid, content);
+
+        // Set the Uuid and status of edited question in response
+        QuestionEditResponse questionEditResponse =
+                new QuestionEditResponse().id(questionEntity.getUuid()).status("QUESTION EDITED");
+        return new ResponseEntity<QuestionEditResponse>(questionEditResponse, HttpStatus.OK);
     }
 }
