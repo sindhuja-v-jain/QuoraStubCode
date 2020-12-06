@@ -1,49 +1,42 @@
 package com.upgrad.quora.service.business;
 
+import com.upgrad.quora.service.dao.QuestionDao;
 import com.upgrad.quora.service.dao.UserAuthDao;
 import com.upgrad.quora.service.dao.UserDao;
+import com.upgrad.quora.service.entity.QuestionEntity;
 import com.upgrad.quora.service.entity.UserAuthEntity;
-import com.upgrad.quora.service.entity.UserEntity;
 import com.upgrad.quora.service.exception.AuthorizationFailedException;
-import com.upgrad.quora.service.exception.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
+
 
 @Service
-public class UserProfileService {
+public class QuestionService {
+
+    @Autowired
+    private QuestionDao questionDao;
+
+    @Autowired
+    private UserAuthDao userAuthDao;
 
     @Autowired
     private UserDao userDao;
 
-    @Autowired private UserAuthDao userAuthDao;
-
     /**
-     * Retrieving the UserEntity based on userId
-     *
-     * @param userUuid
-     * @return UserEntity
-     * @throws UserNotFoundException
-     */
-    public UserEntity getUserByUuid(final String userUuid) throws UserNotFoundException {
-        UserEntity userEntity = userDao.getUserById(userUuid);
-        if (userEntity == null) {
-            // handle exception when null object is returned from userDao
-            throw new UserNotFoundException("USR-001", "User with entered uuid does not exist");
-        } else {
-            return userEntity;
-        }
-    }
-
-    /**
-     * Authorize the user who is trying to fetch a user's profile details
+     * Business logic to authorize user who wants to create question and create a question
      *
      * @param authorization
-     * @return UserAuthEntity
+     * @param questionEntity
+     * @return QuestionEntity
      * @throws AuthorizationFailedException
      */
-    public UserAuthEntity authorizeUser(final String authorization)
+    @Transactional(propagation = Propagation.REQUIRED)
+    public QuestionEntity createQuestion(String authorization, QuestionEntity questionEntity)
             throws AuthorizationFailedException {
         UserAuthEntity userAuthEntity = userAuthDao.getUserAuthByToken(authorization);
         if (userAuthEntity == null) {
@@ -54,9 +47,12 @@ public class UserProfileService {
             ZonedDateTime logoutAt = userAuthEntity.getLogoutAt();
             if (logoutAt != null) {
                 throw new AuthorizationFailedException(
-                        "ATHR-002", "User is signed out.Sign in first to get user details");
+                        "ATHR-002", "User is signed out.Sign in first to post a question");
             } else {
-                return userAuthEntity;
+                // Assign a UUID to the question that is being created.
+                questionEntity.setUuid(UUID.randomUUID().toString());
+                questionEntity.setUserEntity(userAuthEntity.getUserEntity());
+                return questionDao.createQuestion(questionEntity);
             }
         }
     }

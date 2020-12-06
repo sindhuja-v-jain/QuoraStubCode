@@ -1,7 +1,7 @@
 package com.upgrad.quora.api.controller;
 
 import com.upgrad.quora.api.model.UserDetailsResponse;
-import com.upgrad.quora.service.business.UserProfileService;
+import com.upgrad.quora.service.business.CommonService;
 import com.upgrad.quora.service.entity.UserAuthEntity;
 import com.upgrad.quora.service.entity.UserEntity;
 import com.upgrad.quora.service.exception.AuthorizationFailedException;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
     public class CommonController {
 
         @Autowired
-        private UserProfileService userProfileService;
+        private CommonService commonService;
 
         /**
          * Controller method that serves userProfile GET endpoint
@@ -38,10 +38,10 @@ import org.springframework.web.bind.annotation.*;
                 throws AuthorizationFailedException, UserNotFoundException {
 
             // Check if user has signed-in or signed-out already by validating the access-token
-            UserAuthEntity userAuthEntity = userProfileService.authorizeUser(authorization);
+            UserAuthEntity userAuthEntity = commonService.authorizeUser(authorization);
 
             // Get requested user's details after signed in user is authorized
-            UserEntity existingUser = userProfileService.getUserByUuid(userUuid);
+            UserEntity existingUser = commonService.getUserByUuid(userUuid);
 
             // Creating new UserDetailsResponse object to send user profile details in response
             UserDetailsResponse userDetailsResponse = new UserDetailsResponse();
